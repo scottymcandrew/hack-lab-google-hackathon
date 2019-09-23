@@ -1,0 +1,29 @@
+# DESCRIPTION
+# Playbook to check the NGFW is ready
+# EXECUTE
+# ansible-playbook check_fw.yml --extra-vars "mgmt_ip=<ip> admin_password=<password>"
+
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+  tasks:
+    - name: waiting for commit to finish
+      panos_check:
+        ip_address: "{{ mgmt_ip }}"
+        username: "{{ admin_username }}"
+        password: "{{ admin_password }}"
+        timeout: 2
+        interval: 0
+      register: result
+      until: not result is failed
+      retries: 1000
+      delay: 0
+
+
+
+#ansible-playbook -vvv check_fw.yml --extra-vars \"mgmt_ip= untrust_ip=${google_compute_instance.vm-series.network_interface.1.network_ip} apikey=${var.panos_api_key}\"

@@ -1,0 +1,28 @@
+image:
+  # name: scotty2hotty/paloalto-tools
+  name: jamoiholland/containers
+
+before_script:
+  - export TF_VAR_subnetOctet
+  - echo $TF_VAR_subnetOctet
+  # Terraform housekeeping / initialisation
+  - rm -rf .terraform
+  - terraform --version
+  - terraform init
+  - terraform workspace $tf_workspaceAction $TF_VAR_tf_workspaceName
+
+apply:
+  script:
+    - terraform validate
+    - terraform $tfCommand
+  only:
+    variables:
+      - $tfCommand == "apply -auto-approve"
+
+terminate:
+  script: 
+    - terraform $tfCommand
+    - curl "https://dev59680.service-now.com/api/now/table/x_318349_devsecops_table/$TF_VAR_requestSysID" --request PUT --header "Accept:application/json" --header "Content-Type:application/json" --data "{\"state\":\"21\"}" --user $TF_VAR_sn_api_user:$TF_VAR_sn_api_user_pw
+  only:
+    variables: 
+      - $tfCommand == "destroy -auto-approve"

@@ -1,0 +1,244 @@
+# DESCRIPTION
+# Playbook to switch the ngfw "on" and "off"
+# EXECUTE
+# ansible-playbook ngfw-switch.yml --extra-vars "mgmt_ip=<ip> apikey=<key> switch_value=[off/on]"
+
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+  tasks:
+  # modify rules to turn off NGFW when passed in switch_value variable is off
+    - name: turn-off-blocking-attacks-internet-to-web
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "internet-to-web"
+        tag_name: "demo"
+        source_zone: "internet"
+        source_ip: "any"
+        destination_zone: "web"
+        destination_ip: "web-servers"
+        application: ["dvwa-app","web-browsing"]
+        service: ["tcp-80","tcp-4200","tcp-8080"]
+        action: "allow"
+        group_profile: "alerting"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "true"
+        state: "present"
+        commit: "false"
+      when: switch_value == "off"
+    - name: turn-off-blocking-attacks-web-to-db
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "web-to-db"
+        tag_name: "demo"
+        source_zone: "web"
+        source_ip: "web-servers"
+        destination_zone: "database"
+        destination_ip: "database-servers"
+        application: "mysql"
+        service: "application-default"
+        action: "allow"
+        group_profile: "alerting"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "true"
+        state: "present"
+        commit: "False"
+      when: switch_value == "off"
+    - name: turn-off-blocking-attacks-mgmt-traffic-from-internet
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "mgmt-traffic-from-internet"
+        tag_name: "mgmt-access"
+        source_zone: "internet"
+        source_ip: "any"
+        destination_zone: "web"
+        destination_ip: "any"
+        application: "any"
+        service: "any"
+        action: "allow"
+        group_profile: "alerting"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "true"
+        state: "present"
+        commit: "False"
+      when: switch_value == "off"
+    - name: turn-off-blocking-attacks-mgmt-traffic-to-internet
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "mgmt-traffic-to-internet"
+        tag_name: "mgmt-access"
+        source_zone: "web"
+        source_ip: "any"
+        destination_zone: "internet"
+        destination_ip: "any"
+        application: "any"
+        service: "any"
+        action: "allow"
+        group_profile: "alerting"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "true"
+        state: "present"
+        commit: "False"
+      when: switch_value == "off"
+    - name: turn-on-open-and-rely-on-cloud-security
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "open-and-rely-on-cloud-security"
+        tag_name: "demo"
+        source_zone: ["internet","database","web"]
+        source_ip: "any"
+        destination_zone: ["internet","database","web"]
+        destination_ip: "any"
+        application: "any"
+        service: "any"
+        action: "allow"
+        group_profile: "alerting"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "false"
+        state: "present"
+        commit: "False"
+      when: switch_value == "off"
+  # modify rules to turn on NGFW when passed in switch_value variable is on
+    - name: turn-on-blocking-attacks-internet-to-web
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "internet-to-web"
+        tag_name: "demo"
+        source_zone: "internet"
+        source_ip: "any"
+        destination_zone: "web"
+        destination_ip: "web-servers"
+        application: ["dvwa-app","web-browsing"]
+        service: ["tcp-80","tcp-4200","tcp-8080"]
+        action: "allow"
+        group_profile: "blocking"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "false"
+        state: "present"
+        commit: "false"
+      when: switch_value == "on"
+    - name: turn-on-blocking-attacks-web-to-db
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "web-to-db"
+        tag_name: "demo"
+        source_zone: "web"
+        source_ip: "web-servers"
+        destination_zone: "database"
+        destination_ip: "database-servers"
+        application: "mysql"
+        service: "application-default"
+        action: "allow"
+        group_profile: "blocking"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "false"
+        state: "present"
+        commit: "False"
+      when: switch_value == "on"
+    - name: turn-on-blocking-attacks-mgmt-traffic-from-internet
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "mgmt-traffic-from-internet"
+        tag_name: "mgmt-access"
+        source_zone: "internet"
+        source_ip: "any"
+        destination_zone: "web"
+        destination_ip: "any"
+        application: "any"
+        service: "any"
+        action: "allow"
+        group_profile: "blocking"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "false"
+        state: "present"
+        commit: "False"
+      when: switch_value == "on"
+    - name: turn-on-blocking-attacks-mgmt-traffic-to-internet
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "mgmt-traffic-to-internet"
+        tag_name: "mgmt-access"
+        source_zone: "web"
+        source_ip: "any"
+        destination_zone: "internet"
+        destination_ip: "any"
+        application: "any"
+        service: "any"
+        action: "allow"
+        group_profile: "blocking"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "false"
+        state: "present"
+        commit: "False"
+      when: switch_value == "on"
+    - name: turn-off-open-and-rely-on-cloud-security
+      panos_security_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        rule_name: "open-and-rely-on-cloud-security"
+        tag_name: "demo"
+        source_zone: ["internet","database","web"]
+        source_ip: "any"
+        destination_zone: ["internet","database","web"]
+        destination_ip: "any"
+        application: "any"
+        service: "any"
+        action: "allow"
+        group_profile: "alerting"
+        log_end: "true"
+        log_setting: "logs-to-panorama"
+        disabled: "true"
+        state: "present"
+        commit: "False"
+      when: switch_value == "on"
+# aaaaand commit
+    - name: commit
+      panos_commit:
+        ip_address: "{{ mgmt_ip }}"
+        api_key : "{{ apikey }}"
+        username: ''
+        password: ''
+# done

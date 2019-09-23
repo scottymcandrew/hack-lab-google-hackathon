@@ -1,0 +1,32 @@
+# DESCRIPTION
+# Used to provision NAT rules on PAN-OS appliances
+# EXECUTE
+# ansible-playbook create_nat_rule.yml
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+  tasks:
+    - name: customise-panos
+      panos_mgtconfig:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        hostname: "{{ nickname }}"
+        login_banner: "{{ message }}"
+        commit: "False"
+    - name: commit
+      panos_commit:
+        ip_address: "{{ mgmt_ip }}"
+        api_key : "{{ apikey }}"
+        username: ''
+        password: ''
+      register: result
+      until: not result is failed
+      retries: 1000
+      delay: 0

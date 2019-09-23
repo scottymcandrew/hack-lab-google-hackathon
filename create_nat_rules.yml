@@ -1,0 +1,104 @@
+# FILENAME
+# create_nat_rule.yml
+#
+# DESCRIPTION
+# Used to provision NAT rules on PAN-OS appliances
+#
+# REQUIREMENTS
+# pip install ansible
+# ansible-galaxy install PaloAltoNetworks.paloaltonetworks
+# create vars.yml and configure with your credentials
+#
+# EXECUTE
+# ansible-playbook create_nat_rule.yml
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+  tasks:
+    - name: inbound-to-linux-80
+      panos_nat_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        operation: 'add'
+        rule_name: "inbound-to-linux-80"
+        source_zone: ["internet"]
+        destination_zone: "internet"
+        source_ip: ["any"]
+        destination_ip: ["{{ untrust_ip }}"]
+        service: "tcp-80"
+        snat_type: "dynamic-ip-and-port"
+        snat_interface: "ethernet1/2"
+        dnat_address: "{{ linux_ip }}"
+        dnat_port: "80"
+        commit: "False"
+    - name: inbound-to-linux-8080
+      panos_nat_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        operation: 'add'
+        rule_name: "inbound-to-linux-8080"
+        source_zone: ["internet"]
+        destination_zone: "internet"
+        source_ip: ["any"]
+        destination_ip: ["{{ untrust_ip }}"]
+        service: "tcp-8080"
+        snat_type: "dynamic-ip-and-port"
+        snat_interface: "ethernet1/2"
+        dnat_address: "{{ linux_ip }}"
+        dnat_port: "8080"
+        commit: "False"
+    - name: inbound-to-linux-4200
+      panos_nat_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        operation: 'add'
+        rule_name: "inbound-to-linux-4200"
+        source_zone: ["internet"]
+        destination_zone: "internet"
+        source_ip: ["any"]
+        destination_ip: ["{{ untrust_ip }}"]
+        service: "tcp-4200"
+        snat_type: "dynamic-ip-and-port"
+        snat_interface: "ethernet1/2"
+        dnat_address: "{{ linux_ip }}"
+        dnat_port: "4200"
+        commit: "False"
+    - name: inbound-to-linux-22
+      panos_nat_rule:
+        ip_address: "{{ mgmt_ip }}"
+        username: ""
+        password: ""
+        api_key : "{{ apikey }}"
+        operation: 'add'
+        rule_name: "inbound-to-linux-22"
+        source_zone: ["internet"]
+        destination_zone: "internet"
+        source_ip: ["any"]
+        destination_ip: ["{{ untrust_ip }}"]
+        service: "tcp-22"
+        snat_type: "dynamic-ip-and-port"
+        snat_interface: "ethernet1/2"
+        dnat_address: "{{ linux_ip }}"
+        dnat_port: "22"
+        commit: "False"
+    - name: commit
+      panos_commit:
+        ip_address: "{{ mgmt_ip }}"
+        api_key : "{{ apikey }}"
+        username: ''
+        password: ''
+      register: result
+      until: not result is failed
+      retries: 1000
+      delay: 0
