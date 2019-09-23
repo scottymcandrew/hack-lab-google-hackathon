@@ -3,8 +3,8 @@
  */
 
 provider "google" {
-  project     = var.my_gcp_project
-  region      = var.region
+  project = var.my_gcp_project
+  region = var.region
 }
 
 /*
@@ -12,59 +12,63 @@ provider "google" {
  */
 
 resource "google_compute_network" "mgmt" {
-  name                    = "mgmt-${var.subnetOctet}"
+  name = "mgmt-${var.subnetOctet}"
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "mgmt-net" {
-  name             = "mgmt-net-${var.subnetOctet}"
-  ip_cidr_range    = "192.168.${var.subnetOctet}.0/24"
-  region           = var.region
-  network          = "mgmt-${var.subnetOctet}"
+  name = "mgmt-net-${var.subnetOctet}"
+  ip_cidr_range = "192.168.${var.subnetOctet}.0/24"
+  region = var.region
+  network = "mgmt-${var.subnetOctet}"
   enable_flow_logs = "true"
-  depends_on       = [google_compute_network.mgmt]
+  depends_on = [
+    google_compute_network.mgmt]
 }
 
 resource "google_compute_network" "inside" {
-  name                    = "inside-${var.subnetOctet}"
+  name = "inside-${var.subnetOctet}"
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "inside-net" {
-  name             = "inside-net-${var.subnetOctet}"
-  ip_cidr_range    = "10.${var.subnetOctet}.10.0/24"
-  region           = var.region
-  network          = "inside-${var.subnetOctet}"
+  name = "inside-net-${var.subnetOctet}"
+  ip_cidr_range = "10.${var.subnetOctet}.10.0/24"
+  region = var.region
+  network = "inside-${var.subnetOctet}"
   enable_flow_logs = "true"
-  depends_on       = [google_compute_network.inside]
+  depends_on = [
+    google_compute_network.inside]
 }
 
 resource "google_compute_network" "database" {
-  name                    = "database-${var.subnetOctet}"
+  name = "database-${var.subnetOctet}"
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "database-net" {
-  name             = "database-net-${var.subnetOctet}"
-  ip_cidr_range    = "10.${var.subnetOctet}.20.0/24"
-  region           = var.region
-  network          = "database-${var.subnetOctet}"
+  name = "database-net-${var.subnetOctet}"
+  ip_cidr_range = "10.${var.subnetOctet}.20.0/24"
+  region = var.region
+  network = "database-${var.subnetOctet}"
   enable_flow_logs = "true"
-  depends_on       = [google_compute_network.database]
+  depends_on = [
+    google_compute_network.database]
 }
 
 resource "google_compute_network" "outside" {
-  name                    = "outside-${var.subnetOctet}"
+  name = "outside-${var.subnetOctet}"
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "outside-net" {
-  name             = "outside-net-${var.subnetOctet}"
-  ip_cidr_range    = "172.16.${var.subnetOctet}.0/24"
-  region           = var.region
-  network          = "outside-${var.subnetOctet}"
+  name = "outside-net-${var.subnetOctet}"
+  ip_cidr_range = "172.16.${var.subnetOctet}.0/24"
+  region = var.region
+  network = "outside-${var.subnetOctet}"
   enable_flow_logs = "true"
-  depends_on       = [google_compute_network.outside]
+  depends_on = [
+    google_compute_network.outside]
 }
 
 /*
@@ -72,48 +76,53 @@ resource "google_compute_subnetwork" "outside-net" {
  */
 
 resource "google_compute_route" "outside-route-to-inside" {
-  name        = "outside-route-to-inside-${var.subnetOctet}"
-  dest_range  = "10.${var.subnetOctet}.10.0/24"
-  network     = "outside-${var.subnetOctet}"
+  name = "outside-route-to-inside-${var.subnetOctet}"
+  dest_range = "10.${var.subnetOctet}.10.0/24"
+  network = "outside-${var.subnetOctet}"
   next_hop_ip = "172.16.${var.subnetOctet}.2"
-  priority    = 100
-  depends_on  = [google_compute_subnetwork.outside-net]
+  priority = 100
+  depends_on = [
+    google_compute_subnetwork.outside-net]
 }
 
 resource "google_compute_route" "inside-route-to-outside" {
-  name        = "inside-route-to-outside-${var.subnetOctet}"
-  dest_range  = "172.16.${var.subnetOctet}.0/24"
-  network     = "inside-${var.subnetOctet}"
+  name = "inside-route-to-outside-${var.subnetOctet}"
+  dest_range = "172.16.${var.subnetOctet}.0/24"
+  network = "inside-${var.subnetOctet}"
   next_hop_ip = "10.${var.subnetOctet}.10.2"
-  priority    = 100
-  depends_on  = [google_compute_subnetwork.inside-net]
+  priority = 100
+  depends_on = [
+    google_compute_subnetwork.inside-net]
 }
 
 resource "google_compute_route" "inside-route-to-database" {
-  name        = "inside-route-to-database-${var.subnetOctet}"
-  dest_range  = "10.${var.subnetOctet}.20.0/24"
-  network     = "inside-${var.subnetOctet}"
+  name = "inside-route-to-database-${var.subnetOctet}"
+  dest_range = "10.${var.subnetOctet}.20.0/24"
+  network = "inside-${var.subnetOctet}"
   next_hop_ip = "10.${var.subnetOctet}.10.2"
-  priority    = 100
-  depends_on  = [google_compute_subnetwork.inside-net]
+  priority = 100
+  depends_on = [
+    google_compute_subnetwork.inside-net]
 }
 
 resource "google_compute_route" "inside-route-to-real-internet" {
-  name        = "inside-route-to-real-internet-${var.subnetOctet}"
-  dest_range  = "0.0.0.0/0"
-  network     = "inside-${var.subnetOctet}"
+  name = "inside-route-to-real-internet-${var.subnetOctet}"
+  dest_range = "0.0.0.0/0"
+  network = "inside-${var.subnetOctet}"
   next_hop_ip = "10.${var.subnetOctet}.10.2"
-  priority    = 100
-  depends_on  = [google_compute_subnetwork.inside-net]
+  priority = 100
+  depends_on = [
+    google_compute_subnetwork.inside-net]
 }
 
 resource "google_compute_route" "database-route-to-inside" {
-  name        = "database-route-to-inside-${var.subnetOctet}"
-  dest_range  = "10.${var.subnetOctet}.10.0/24"
-  network     = "database-${var.subnetOctet}"
+  name = "database-route-to-inside-${var.subnetOctet}"
+  dest_range = "10.${var.subnetOctet}.10.0/24"
+  network = "database-${var.subnetOctet}"
   next_hop_ip = "10.${var.subnetOctet}.20.2"
-  priority    = 100
-  depends_on  = [google_compute_subnetwork.database-net]
+  priority = 100
+  depends_on = [
+    google_compute_subnetwork.database-net]
 }
 
 /*
@@ -121,15 +130,15 @@ resource "google_compute_route" "database-route-to-inside" {
  */
 
 resource "google_compute_instance" "vm-series" {
-  count                     = 1
-  name                      = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-fw-${var.subnetOctet}"
-  machine_type              = "n1-standard-4"
-  zone                      = var.zone
-  can_ip_forward            = true
+  count = 1
+  name = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-fw-${var.subnetOctet}"
+  machine_type = "n1-standard-4"
+  zone = var.zone
+  can_ip_forward = true
   allow_stopping_for_update = true
   metadata = {
-    serial-port-enable                   = true
-    ssh-keys                             = "admin:${var.gce_ssh_pub_key}"
+    serial-port-enable = true
+    ssh-keys = "admin:${var.gce_ssh_pub_key}"
     vmseries-bootstrap-gce-storagebucket = "sn-bootstrap-bucket"
   }
   service_account {
@@ -202,16 +211,16 @@ resource "google_compute_instance" "vm-series" {
   provisioner "local-exec" {
     command = "ansible-playbook -vvv customise_panos.yml --extra-vars \"mgmt_ip=${google_compute_instance.vm-series[0].network_interface[0].access_config[0].nat_ip} nickname='${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}' message='${var.my_gcp_project}' apikey=${var.panos_api_key}\""
   }
-
+}
 
 /*
  *  GCP Instance - Linux Web Server Victim
  */
 
 resource "google_compute_instance" "linux" {
-  name         = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-linux-${var.subnetOctet}"
+  name = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-linux-${var.subnetOctet}"
   machine_type = "n1-standard-1"
-  zone         = var.zone
+  zone = var.zone
 
   boot_disk {
     initialize_params {
@@ -230,7 +239,7 @@ resource "google_compute_instance" "linux" {
 
   metadata = {
     serial-port-enable = true
-    ssh-keys           = "admin:${var.gce_ssh_pub_key}"
+    ssh-keys = "admin:${var.gce_ssh_pub_key}"
   }
 
   metadata_startup_script = "wget https://raw.githubusercontent.com/jamesholland-uk/auto-hack-cloud/master/linuxserver-startup.sh \n chmod 755 linuxserver-startup.sh \n ./linuxserver-startup.sh ${var.subnetOctet}"
@@ -240,10 +249,14 @@ resource "google_compute_instance" "linux" {
   }
 
   service_account {
-    scopes = ["userinfo-email", "compute-ro", "storage-ro"]
+    scopes = [
+      "userinfo-email",
+      "compute-ro",
+      "storage-ro"]
   }
 
-  depends_on = [google_compute_subnetwork.inside-net]
+  depends_on = [
+    google_compute_subnetwork.inside-net]
 }
 
 /*
@@ -251,9 +264,9 @@ resource "google_compute_instance" "linux" {
  */
 
 resource "google_compute_instance" "kali" {
-  name         = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-kali-${var.subnetOctet}"
+  name = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-kali-${var.subnetOctet}"
   machine_type = "n1-standard-1"
-  zone         = var.zone
+  zone = var.zone
 
   boot_disk {
     initialize_params {
@@ -272,16 +285,20 @@ resource "google_compute_instance" "kali" {
 
   metadata = {
     serial-port-enable = true
-    ssh-keys           = "admin:${var.gce_ssh_pub_key}"
+    ssh-keys = "admin:${var.gce_ssh_pub_key}"
   }
 
   metadata_startup_script = "curl https://raw.githubusercontent.com/jamesholland-uk/auto-hack-cloud/master/kali-startup.sh > kali-startup.sh \n chmod 755 kali-startup.sh \n ./kali-startup.sh ${var.subnetOctet}"
 
   service_account {
-    scopes = ["userinfo-email", "compute-ro", "storage-ro"]
+    scopes = [
+      "userinfo-email",
+      "compute-ro",
+      "storage-ro"]
   }
 
-  depends_on = [google_compute_subnetwork.outside-net]
+  depends_on = [
+    google_compute_subnetwork.outside-net]
 }
 
 /*
@@ -289,9 +306,9 @@ resource "google_compute_instance" "kali" {
  */
 
 resource "google_compute_instance" "db" {
-  name         = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-db-${var.subnetOctet}"
+  name = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-db-${var.subnetOctet}"
   machine_type = "n1-standard-1"
-  zone         = var.zone
+  zone = var.zone
 
   boot_disk {
     initialize_params {
@@ -310,7 +327,7 @@ resource "google_compute_instance" "db" {
 
   metadata = {
     serial-port-enable = true
-    ssh-keys           = "admin:${var.gce_ssh_pub_key}"
+    ssh-keys = "admin:${var.gce_ssh_pub_key}"
   }
 
   metadata_startup_script = "wget https://raw.githubusercontent.com/jamesholland-uk/auto-hack-cloud/master/database-startup.sh \n chmod 755 database-startup.sh \n ./database-startup.sh ${var.subnetOctet}"
@@ -320,10 +337,14 @@ resource "google_compute_instance" "db" {
   }
 
   service_account {
-    scopes = ["userinfo-email", "compute-ro", "storage-ro"]
+    scopes = [
+      "userinfo-email",
+      "compute-ro",
+      "storage-ro"]
   }
 
-  depends_on = [google_compute_subnetwork.database-net]
+  depends_on = [
+    google_compute_subnetwork.database-net]
 }
 
 /*
@@ -331,93 +352,129 @@ resource "google_compute_instance" "db" {
  */
 
 resource "google_compute_firewall" "internet-ingress-for-mgt" {
-  name    = "internet-ingress-for-mgt-${var.subnetOctet}"
+  name = "internet-ingress-for-mgt-${var.subnetOctet}"
   network = "mgmt-${var.subnetOctet}"
   allow {
     protocol = "tcp"
-    ports    = ["22", "443"]
+    ports = [
+      "22",
+      "443"]
   }
-  source_ranges = ["0.0.0.0/0"]
-  depends_on    = [google_compute_network.mgmt]
+  source_ranges = [
+    "0.0.0.0/0"]
+  depends_on = [
+    google_compute_network.mgmt]
 }
 
 resource "google_compute_firewall" "internet-ingress-for-db" {
-  name    = "internet-ingress-for-db-${var.subnetOctet}"
+  name = "internet-ingress-for-db-${var.subnetOctet}"
   network = "database-${var.subnetOctet}"
   allow {
     protocol = "tcp"
-    ports    = ["22", "443"]
+    ports = [
+      "22",
+      "443"]
   }
-  source_ranges = ["0.0.0.0/0"]
-  depends_on    = [google_compute_network.database]
+  source_ranges = [
+    "0.0.0.0/0"]
+  depends_on = [
+    google_compute_network.database]
 }
 
 resource "google_compute_firewall" "internet-ingress-for-outside" {
-  name    = "internet-ingress-for-outside-${var.subnetOctet}"
+  name = "internet-ingress-for-outside-${var.subnetOctet}"
   network = "outside-${var.subnetOctet}"
   allow {
     protocol = "tcp"
-    ports    = ["22", "80", "443", "3389", "4200", "8080"]
+    ports = [
+      "22",
+      "80",
+      "443",
+      "3389",
+      "4200",
+      "8080"]
   }
   allow {
     protocol = "udp"
-    ports    = ["4501"]
+    ports = [
+      "4501"]
   }
-  source_ranges = ["0.0.0.0/0"]
-  depends_on    = [google_compute_network.outside]
+  source_ranges = [
+    "0.0.0.0/0"]
+  depends_on = [
+    google_compute_network.outside]
 }
 
 resource "google_compute_firewall" "internet-ingress-for-inside" {
-  name    = "internet-ingress-for-inside-${var.subnetOctet}"
+  name = "internet-ingress-for-inside-${var.subnetOctet}"
   network = "inside-${var.subnetOctet}"
   allow {
     protocol = "tcp"
-    ports    = ["22", "80", "443", "3389", "8080"]
+    ports = [
+      "22",
+      "80",
+      "443",
+      "3389",
+      "8080"]
   }
-  source_ranges = ["0.0.0.0/0"]
-  depends_on    = [google_compute_network.inside]
+  source_ranges = [
+    "0.0.0.0/0"]
+  depends_on = [
+    google_compute_network.inside]
 }
 
 resource "google_compute_firewall" "outside-to-inside" {
-  name    = "outside-to-inside-${var.subnetOctet}"
+  name = "outside-to-inside-${var.subnetOctet}"
   network = "inside-${var.subnetOctet}"
   allow {
     protocol = "all"
     // Any port
   }
-  source_ranges = ["10.${var.subnetOctet}.10.0/24", "172.16.${var.subnetOctet}.0/24"]
-  depends_on    = [google_compute_network.inside]
+  source_ranges = [
+    "10.${var.subnetOctet}.10.0/24",
+    "172.16.${var.subnetOctet}.0/24"]
+  depends_on = [
+    google_compute_network.inside]
 }
 
 resource "google_compute_firewall" "inside-to-db" {
-  name    = "inside-to-db-${var.subnetOctet}"
+  name = "inside-to-db-${var.subnetOctet}"
   network = "database-${var.subnetOctet}"
   allow {
     protocol = "all"
     // Any port
   }
-  source_ranges = ["10.${var.subnetOctet}.10.0/24", "10.${var.subnetOctet}.20.0/24"]
-  depends_on    = [google_compute_network.database]
+  source_ranges = [
+    "10.${var.subnetOctet}.10.0/24",
+    "10.${var.subnetOctet}.20.0/24"]
+  depends_on = [
+    google_compute_network.database]
 }
 
 resource "google_compute_firewall" "inside-to-outside" {
-  name    = "inside-to-outside-${var.subnetOctet}"
+  name = "inside-to-outside-${var.subnetOctet}"
   network = "outside-${var.subnetOctet}"
   allow {
     protocol = "all"
     // Any port
   }
-  source_ranges = ["10.${var.subnetOctet}.10.0/24", "172.16.${var.subnetOctet}.0/24"]
-  depends_on    = [google_compute_network.outside]
+  source_ranges = [
+    "10.${var.subnetOctet}.10.0/24",
+    "172.16.${var.subnetOctet}.0/24"]
+  depends_on = [
+    google_compute_network.outside]
 }
 
 resource "google_compute_firewall" "db-to-inside" {
-  name    = "db-to-inside-${var.subnetOctet}"
+  name = "db-to-inside-${var.subnetOctet}"
   network = "inside-${var.subnetOctet}"
   allow {
     protocol = "all"
     // Any port
   }
-  source_ranges = ["10.${var.subnetOctet}.10.0/24", "10.${var.subnetOctet}.20.0/24"]
-  depends_on    = [google_compute_network.inside]
+  source_ranges = [
+    "10.${var.subnetOctet}.10.0/24",
+    "10.${var.subnetOctet}.20.0/24"]
+  depends_on = [
+    google_compute_network.inside]
 }
