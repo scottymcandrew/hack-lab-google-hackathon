@@ -3,19 +3,8 @@
  */
 
 provider "google" {
-  region      = var.gcp_zone
-  credentials = var.gcp_credentials
-  project     = var.gcp_project_id
-}
-
-/*
- *  Null resource to fire control email near the start of Terraform apply
- */
-
-resource "null_resource" "start_email" {
-  provisioner "local-exec" {
-    command = "./send_started_email.sh ${var.email_key} ${var.requested_for_email} ${var.requestNumber}"
-  }
+  project     = var.my_gcp_project
+  region      = var.region
 }
 
 /*
@@ -30,7 +19,7 @@ resource "google_compute_network" "mgmt" {
 resource "google_compute_subnetwork" "mgmt-net" {
   name             = "mgmt-net-${var.subnetOctet}"
   ip_cidr_range    = "192.168.${var.subnetOctet}.0/24"
-  region           = var.gcp_region
+  region           = var.region
   network          = "mgmt-${var.subnetOctet}"
   enable_flow_logs = "true"
   depends_on       = [google_compute_network.mgmt]
@@ -44,7 +33,7 @@ resource "google_compute_network" "inside" {
 resource "google_compute_subnetwork" "inside-net" {
   name             = "inside-net-${var.subnetOctet}"
   ip_cidr_range    = "10.${var.subnetOctet}.10.0/24"
-  region           = var.gcp_region
+  region           = var.region
   network          = "inside-${var.subnetOctet}"
   enable_flow_logs = "true"
   depends_on       = [google_compute_network.inside]
@@ -58,7 +47,7 @@ resource "google_compute_network" "database" {
 resource "google_compute_subnetwork" "database-net" {
   name             = "database-net-${var.subnetOctet}"
   ip_cidr_range    = "10.${var.subnetOctet}.20.0/24"
-  region           = var.gcp_region
+  region           = var.region
   network          = "database-${var.subnetOctet}"
   enable_flow_logs = "true"
   depends_on       = [google_compute_network.database]
@@ -72,7 +61,7 @@ resource "google_compute_network" "outside" {
 resource "google_compute_subnetwork" "outside-net" {
   name             = "outside-net-${var.subnetOctet}"
   ip_cidr_range    = "172.16.${var.subnetOctet}.0/24"
-  region           = var.gcp_region
+  region           = var.region
   network          = "outside-${var.subnetOctet}"
   enable_flow_logs = "true"
   depends_on       = [google_compute_network.outside]
@@ -135,12 +124,12 @@ resource "google_compute_instance" "vm-series" {
   count                     = 1
   name                      = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-fw-${var.subnetOctet}"
   machine_type              = "n1-standard-4"
-  zone                      = var.gcp_zone
+  zone                      = var.zone
   can_ip_forward            = true
   allow_stopping_for_update = true
   metadata = {
     serial-port-enable                   = true
-    ssh-keys                             = "admin:${var.gcp_ssh_public_key}"
+    ssh-keys                             = "admin:${var.gce_ssh_pub_key}"
     vmseries-bootstrap-gce-storagebucket = "sn-bootstrap-bucket"
   }
   service_account {
@@ -211,27 +200,9 @@ resource "google_compute_instance" "vm-series" {
   // This provisioner configures system settings on the firewall using Ansible
   // This provisioner configures system settings on the firewall using Ansible
   provisioner "local-exec" {
-    command = "ansible-playbook -vvv customise_panos.yml --extra-vars \"mgmt_ip=${google_compute_instance.vm-series[0].network_interface[0].access_config[0].nat_ip} nickname='${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}' message='${var.projectName}' apikey=${var.panos_api_key}\""
+    command = "ansible-playbook -vvv customise_panos.yml --extra-vars \"mgmt_ip=${google_compute_instance.vm-series[0].network_interface[0].access_config[0].nat_ip} nickname='${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}' message='${var.my_gcp_project}' apikey=${var.panos_api_key}\""
   }
 
-  // This provisioner sends the user an SMS when the deployment is complete
-  // This provisioner sends the user an SMS when the deployment is complete
-  provisioner "local-exec" {
-    command = "./send_sms.sh ${var.requested_for_mobile} ${var.project_mgr_mobile} ${google_compute_instance.vm-series[0].network_interface[0].access_config[0].nat_ip} ${var.user_password} ${var.sms_key}"
-  }
-
-  // This provisioner sends the user an email when the deployment is complete, and the attacker email, and control email
-  // This provisioner sends the user an email when the deployment is complete, and the attacker email, and control email
-  provisioner "local-exec" {
-    command = "./send_complete_email.sh ${var.requested_for_email} ${var.email_key} ${google_compute_instance.vm-series[0].network_interface[0].access_config[0].nat_ip} ${var.user_password} ${google_compute_instance.vm-series[0].network_interface[1].access_config[0].nat_ip} ${google_compute_instance.kali.network_interface[0].access_config[0].nat_ip} ${var.project_mgr_email}  ${var.requestNumber}"
-  }
-
-  // This provisioner updates the ServiceNow Request
-  // This provisioner updates the ServiceNow Request
-  provisioner "local-exec" {
-    command = "./update_sn.sh ${google_compute_instance.kali.network_interface[0].access_config[0].nat_ip} ${google_compute_instance.vm-series[0].network_interface[0].access_config[0].nat_ip} "
-  }
-}
 
 /*
  *  GCP Instance - Linux Web Server Victim
@@ -240,7 +211,7 @@ resource "google_compute_instance" "vm-series" {
 resource "google_compute_instance" "linux" {
   name         = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-linux-${var.subnetOctet}"
   machine_type = "n1-standard-1"
-  zone         = var.gcp_zone
+  zone         = var.zone
 
   boot_disk {
     initialize_params {
@@ -259,7 +230,7 @@ resource "google_compute_instance" "linux" {
 
   metadata = {
     serial-port-enable = true
-    ssh-keys           = "admin:${var.gcp_ssh_public_key}"
+    ssh-keys           = "admin:${var.gce_ssh_pub_key}"
   }
 
   metadata_startup_script = "wget https://raw.githubusercontent.com/jamesholland-uk/auto-hack-cloud/master/linuxserver-startup.sh \n chmod 755 linuxserver-startup.sh \n ./linuxserver-startup.sh ${var.subnetOctet}"
@@ -282,7 +253,7 @@ resource "google_compute_instance" "linux" {
 resource "google_compute_instance" "kali" {
   name         = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-kali-${var.subnetOctet}"
   machine_type = "n1-standard-1"
-  zone         = var.gcp_zone
+  zone         = var.zone
 
   boot_disk {
     initialize_params {
@@ -301,7 +272,7 @@ resource "google_compute_instance" "kali" {
 
   metadata = {
     serial-port-enable = true
-    ssh-keys           = "admin:${var.gcp_ssh_public_key}"
+    ssh-keys           = "admin:${var.gce_ssh_pub_key}"
   }
 
   metadata_startup_script = "curl https://raw.githubusercontent.com/jamesholland-uk/auto-hack-cloud/master/kali-startup.sh > kali-startup.sh \n chmod 755 kali-startup.sh \n ./kali-startup.sh ${var.subnetOctet}"
@@ -320,7 +291,7 @@ resource "google_compute_instance" "kali" {
 resource "google_compute_instance" "db" {
   name         = "${lower(var.requestNumber)}-${lower(var.deploymentArea)}-${lower(var.devWorkflow)}-db-${var.subnetOctet}"
   machine_type = "n1-standard-1"
-  zone         = var.gcp_zone
+  zone         = var.zone
 
   boot_disk {
     initialize_params {
@@ -339,7 +310,7 @@ resource "google_compute_instance" "db" {
 
   metadata = {
     serial-port-enable = true
-    ssh-keys           = "admin:${var.gcp_ssh_public_key}"
+    ssh-keys           = "admin:${var.gce_ssh_pub_key}"
   }
 
   metadata_startup_script = "wget https://raw.githubusercontent.com/jamesholland-uk/auto-hack-cloud/master/database-startup.sh \n chmod 755 database-startup.sh \n ./database-startup.sh ${var.subnetOctet}"
@@ -450,4 +421,3 @@ resource "google_compute_firewall" "db-to-inside" {
   source_ranges = ["10.${var.subnetOctet}.10.0/24", "10.${var.subnetOctet}.20.0/24"]
   depends_on    = [google_compute_network.inside]
 }
-

@@ -6,50 +6,42 @@
  * GCP Variables
  */
 
-variable "gcp_project_id" {
+variable "my_gcp_project" {
   description = "GCP Project ID"
   type        = string
-  default     = "cloud-automation-demo"
 }
 
-variable "gcp_region" {
+variable "region" {
   description = "GCP Region"
-  type        = string
-  default     = "europe-west2"
 }
 
-variable "gcp_zone" {
+variable "zone" {
   description = "GCP Zone"
-  type        = string
-  default     = "europe-west2-b"
 }
 
 /*
  * Creds
  */
 
-variable "gcp_credentials" {
-  description = "GCP JSON credentials file"
-  type        = string
+# This particular project is intended to be run within GCP cloud shell, so this is not required
+#variable "gcp_credentials" {
+#  description = "GCP JSON credentials file"
+#  type        = string
+#}
+
+variable "gce_ssh_user" {
+  # Set value in environment variable TF_VAR_gce_ssh_user
+  description = " ssh user that is used in the public key"
 }
 
-variable "gcp_ssh_public_key" {
+variable "gce_ssh_pub_key" {
+  # Set value in environment variable TF_VAR_gce_ssh_pub_key
   description = "SSH public key file"
   type        = string
 }
 
 variable "panos_api_key" {
   description = "API key for PAN-OS"
-  type        = string
-}
-
-variable "sms_key" {
-  description = "API key for SMS service"
-  type        = string
-}
-
-variable "email_key" {
-  description = "API key for email service"
   type        = string
 }
 
@@ -90,25 +82,5 @@ variable "requestNumber" {
   description = "This will be used to track each run of the demo deployment"
   type        = string
   default     = "SCOPS000"
-}
-
-variable "requested_for_mobile" {
-  description = "This will be used to send SMS to the SE"
-  type        = string
-}
-
-variable "requested_for_email" {
-  description = "This will be used to send email to the SE"
-  type        = string
-}
-
-variable "project_mgr_mobile" {
-  description = "This will be used to send SMS to the user"
-  type        = string
-}
-
-variable "project_mgr_email" {
-  description = "This will be used to send email to the user"
-  type        = string
 }
 
