@@ -139,7 +139,7 @@ resource "google_compute_instance" "vm-series" {
   metadata = {
     serial-port-enable = true
     ssh-keys = "admin:${var.gce_ssh_pub_key}"
-    vmseries-bootstrap-gce-storagebucket = "sn-bootstrap-bucket"
+    vmseries-bootstrap-gce-storagebucket = "panos-bootstrap-bucket"
   }
   service_account {
     scopes = [
