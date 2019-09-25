@@ -148,10 +148,9 @@ resource "google_compute_instance" "vm-series" {
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring.write",
     ]
-    email = [
-      "vm-series@scott-client-test.iam.gserviceaccount.com"
-    ]
+    email = "vm-series@scott-client-test.iam.gserviceaccount.com"
   }
+  
   network_interface {
     subnetwork = "mgmt-net-${var.subnetOctet}"
     network_ip = "192.168.${var.subnetOctet}.2"
